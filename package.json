@@ -2,11 +2,9 @@
   "name": "node-api",
   "version": "1.0.0",
   "main": "index.ts",
-  "scripts": { 
-    "dev": "vercel dev",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "deploy": "vercel --prod"
+  "scripts": { "dev": "nodemon --ext ts --exec ts-node src/index.ts",
+  "build": "tsc",
+  "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",
