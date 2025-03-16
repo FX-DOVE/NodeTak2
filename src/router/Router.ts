@@ -1,15 +1,20 @@
-import Express from "express";
+import express from "express";
+import { 
+  getAllNotes, 
+  getNoteById, 
+  createNewNote, 
+  deleteNoteById, 
+  UpdateANote, 
+  getNotesByCategory 
+} from "../controller/controller";
 
+const Router = express.Router();
 
-import { getAllNotes, getNoteById, createNewNote, deleteNoteById } from "../controller/controller";
+Router.get("/notes", getAllNotes);
+Router.get("/notes/:id", getNoteById);
+Router.post("/notes", createNewNote);
+Router.delete("/notes/:id", deleteNoteById);
+Router.put("/notes/:id", UpdateANote);
+Router.get("/notes/categories/:categoryId", getNotesByCategory);
 
-const Routh = Express.Router()
-
-Routh.get("/notes", getAllNotes);
-Routh.get("/notes/:id",getNoteById);
-
-Routh.post("/notes", createNewNote );
-Routh.delete("/notes/:id", deleteNoteById);
-
-
-export default Routh
+export default Router;

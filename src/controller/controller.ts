@@ -1,133 +1,119 @@
-import  { Request, Response } from 'express';
-import Note, {INote} from '../noteschema/Noteschema'
+import { Request, Response } from "express";
+import Note from "../noteschema/Noteschema";
 
-// getall notes  functions 
-export const getAllNotes =  async (req: Request, res: Response) => {
- try {
-    const notes = await Note.find()
-    if(!notes.length){
-        console.log("you have successfully fetched all Notes")
-    res.status(200).send({
-        messages:"note is empty ",
-        Notes:"Add New Note Please"
-        
-    }) 
-    return
+// Get notes by category
+export const getNotesByCategory = async (req: Request, res: Response): Promise<void> => {
+    const { categoryId } = req.params;
+    try {
+      const notes = await Note.find({ category: categoryId });
+      if (!notes.length) {
+        res.status(404).json({ message: "No notes found for this category" });
+        return;
+      }
+      res.status(200).json(notes);
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).json({ message: "Internal server error", error });
     }
-    console.log("you have successfully fetched all Notes")
-    res.status(200).send({
-        messages:" you have successfully fetched all Notes",
-        Notes:notes
-    })
- } catch (error) {
-    console.error('Error fetching notes:', error);
-     res.status(500).send({ message: 'Internal server error', error });
-     return
- }
- 
+  };
+
+// Get all notes
+export const getAllNotes = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const notes = await Note.find().populate("category");
+    if (!notes.length) {
+      res.status(200).json({ message: "No notes available. Add new notes." });
+      return;
+    }
+    res.status(200).json(notes);
+  } catch (error) {
+    console.error("Error fetching notes:", error);
+    res.status(500).json({ message: "Internal server error", error });
+  }
 };
 
-
-// get notes by id functions 
-export const getNoteById = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    try {
-        // find note with id 
-    const note = await Note.findOne({id})
-    if(!note){
-        console.error('Note not found');
-        res.status(500).send({ message: ' Note not found'});
-        return
+// Get note by ID
+export const getNoteById = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  try {
+    const note = await Note.findOne({ id }).populate("category");
+    if (!note) {
+      res.status(404).json({ message: "Note not found" });
+      return;
     }
-    console.log(note)
-   
-    res.status(200).send({
-        messages:" you have successfully fetched one Note By id",
-        Notes:note
-    })
-    } catch (error) {
-        console.error('Internal server error:', error);
-         res.status(500).send({ message: 'Internal server error', error });
-         return
+    res.status(200).json(note);
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+// Create new note
+export const createNewNote = async (req: Request, res: Response): Promise<void> => {
+  const { title, content, category } = req.body;
+  try {
+    const existingNote = await Note.findOne({ title });
+    if (existingNote) {
+      res.status(409).json({ message: "Note title already exists" });
+      return;
     }
-  };
 
+    const lastNote = await Note.findOne().sort({ id: -1 });
+    const newId = lastNote ? lastNote.id + 1 : 1;
 
-  // create new notes functions 
+    const newNote = new Note({
+      id: newId,
+      title,
+      content,
+      category,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
-  export    const createNewNote  = async (req: Request, res: Response) => {
-    const {title, content} = req.body
-    
-    try {
-        // check is the note title is already in the database 
-        const existedNote: INote | null = await Note.findOne({title})
-        if(existedNote){
-            console.log('Note title already exists');
-         res.status(409).send("not title alreasy exists")
-        return
-        }
+    await newNote.save();
+    res.status(201).json({ message: `Note '${title}' created successfully`, note: newNote });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
 
-        // Find the last created note to get the last `id`
-    const lastNote: INote | null = await Note.findOne().sort({ id: -1 }); // Sort by `id` in descending order
-    const newId: number = lastNote ? lastNote.id + 1 : 1; // Increment `id`, default to 1 if no notes exist
-
-
-    // Create the new note
-    const newNote: INote = new Note({
-        id: newId,
-        title,
-        content,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      // saving the note to data base 
-       await newNote.save();
-      res.status(201).send(
-        {
-            success:true,
-            message: `you have succssfully created Note => ${title}` ,
-            note:newNote
-        }
-      )
-      console.log(`Note create successfully ${newNote}`)
-    
-    } catch (error) {
-        console.log(error)
-      res.send(error)
+// Delete note by ID
+export const deleteNoteById = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  try {
+    const note = await Note.findOneAndDelete({ id });
+    if (!note) {
+      res.status(404).json({ message: "Note not found" });
+      return;
     }
-  
-    
-  
-  };
+    res.status(200).json({ message: `Note with ID ${id} deleted successfully` });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
 
- 
-// delete one note by id functions
-  export const deleteNoteById = async(req: Request, res: Response) => {
-    const { id } = req.params;
-    try {
-        const note = await Note.findOneAndDelete({id})
-        if(!note){
-            console.log(" Bote not found try again")
-            res.status(500).send({ message: ' Note not found'});
-            return
-        }
-        const remainingNote   = await Note.find()
-        if(!remainingNote.length){
-            res.status(200).send({ message: ' Note deleted successfuly',
-                note: 'Note is empty'
-                
-            })
-            return
-        }
-        res.status(200).send({ message: `Note with Id: ${id} has been deleted`,
-            note: remainingNote
-            
-        });
- return
-    } catch (error) {
-        res.send(" server error")
+// Update note by ID
+export const UpdateANote = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { title, content, category } = req.body;
+  try {
+    const note = await Note.findOne({ id });
+    if (!note) {
+      res.status(404).json({ message: "No note found" });
+      return;
     }
- 
-  };
-  
+
+    if (title) note.title = title;
+    if (content) note.content = content;
+    if (category) note.category = category;
+    note.updatedAt = new Date();
+
+    await note.save();
+    res.status(200).json({ message: "Note updated successfully", note });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
