@@ -11,7 +11,7 @@ export const authenticateUser = (req: AuthRequest, res: Response, next: NextFunc
   const token = req.header("Authorization")?.split(" ")[1];
 
   if (!token) {
-    res.status(401).send({ message: "Access denied. No token provided." });
+    res.status(401).send({ message: "Access denied. No token provided.", tip:"please login or create and account" });
   } else {
     try {
       const decoded = jwt.verify(token, SECRET_KEY) as { userId: string };
