@@ -1,23 +1,23 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./databaseconnection/dbconnect";
-import Routh from "./router/Router";
-import logRequests from "./middleware/loggingMiddleware";
+import noteRoutes from "./router/noteRoutes";
+import authRoutes from "./router/authRoutes";
 
 dotenv.config();
+connectDB();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(logRequests);
 
-app.use("/api", Routh);
+app.use("/api/auth", authRoutes);
+app.use("/api", noteRoutes);
 
-app.listen(PORT, () => {
-  connectDB();
-  console.log(`Server running on http://localhost:${PORT}/api/notes`);
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT} access it here ==> http://localhost:8000/api/auth/login`));
+
+
+
